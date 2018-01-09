@@ -1,6 +1,5 @@
 use futures::{Future, Stream};
-use futures::future::err;
-use hyper::{Chunk, Client, Method, StatusCode, Uri};
+use hyper::{Client, Method, StatusCode, Uri};
 use hyper::client::{HttpConnector, Request};
 use hyper::error;
 use tokio_core::reactor::Handle;
@@ -37,18 +36,18 @@ impl StoreClient {
             self.client
                 .request(req)
                 .and_then(|response| match response.status() {
-                    StatusCode::Ok => {
-                        let b: Box<
-                            Future<Item = Chunk, Error = error::Error>,
-                        > = Box::new(response.body().concat2());
-                        b
-                    }
-                    _ => Box::new(err(error::Error::Status)),
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
                 })
+                .and_then(|response| response.body().concat2())
                 .and_then(|body| {
                     let id = String::from_utf8(body.to_vec()).unwrap();
                     info!("raw image uploaded. Got ID {}", id);
                     Ok(id)
+                })
+                .map_err(|e| {
+                    warn!("raw image upload failed: {}", e);
+                    e
                 }),
         )
     }
@@ -66,18 +65,18 @@ impl StoreClient {
             self.client
                 .request(req)
                 .and_then(|response| match response.status() {
-                    StatusCode::Ok => {
-                        let b: Box<
-                            Future<Item = Chunk, Error = error::Error>,
-                        > = Box::new(response.body().concat2());
-                        b
-                    }
-                    _ => Box::new(err(error::Error::Status)),
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
                 })
+                .and_then(|response| response.body().concat2())
                 .and_then(|body| {
                     let id = String::from_utf8(body.to_vec()).unwrap();
                     info!("sidecar uploaded. Got ID {}", id);
                     Ok(id)
+                })
+                .map_err(|e| {
+                    warn!("sidecar upload failed: {}", e);
+                    e
                 }),
         )
     }
@@ -92,18 +91,18 @@ impl StoreClient {
             self.client
                 .request(req)
                 .and_then(|response| match response.status() {
-                    StatusCode::Ok => {
-                        let b: Box<
-                            Future<Item = Chunk, Error = error::Error>,
-                        > = Box::new(response.body().concat2());
-                        b
-                    }
-                    _ => Box::new(err(error::Error::Status)),
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
                 })
+                .and_then(|response| response.body().concat2())
                 .and_then(|body| {
                     let id = String::from_utf8(body.to_vec()).unwrap();
                     info!("image uploaded. Got ID {}", id);
                     Ok(id)
+                })
+                .map_err(|e| {
+                    warn!("image upload failed: {}", e);
+                    e
                 }),
         )
     }
