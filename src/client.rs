@@ -52,6 +52,68 @@ impl StoreClient {
         )
     }
 
+    pub fn get_raw_image(
+        &self,
+        raw_id: &String,
+    ) -> Box<Future<Item = Vec<u8>, Error = error::Error>> {
+        let uri = self.build_uri(&format!("/raw/{}", raw_id));
+        info!(
+            "downloading raw image {} from store {}",
+            raw_id,
+            uri.to_string()
+        );
+
+        Box::new(
+            self.client
+                .get(uri)
+                .and_then(|response| match response.status() {
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
+                })
+                .and_then(|response| response.body().concat2())
+                .and_then(|body| {
+                    let data = body.to_vec();
+                    info!("raw image downloaded ({} bytes)", data.len());
+                    Ok(data)
+                })
+                .map_err(|e| {
+                    warn!("raw image download failed: {}", e);
+                    e
+                }),
+        )
+    }
+
+    pub fn get_sidecar(
+        &self,
+        raw_id: &String,
+    ) -> Box<Future<Item = Vec<u8>, Error = error::Error>> {
+        let uri = self.build_uri(&format!("/sidecar/{}", raw_id));
+        info!(
+            "downloading sidecar {} from store {}",
+            raw_id,
+            uri.to_string()
+        );
+
+        Box::new(
+            self.client
+                .get(uri)
+                .and_then(|response| match response.status() {
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
+                })
+                .and_then(|response| response.body().concat2())
+                .and_then(|body| {
+                    let data = body.to_vec();
+                    info!("sidecar downloaded ({} bytes)", data.len());
+                    Ok(data)
+                })
+                .map_err(|e| {
+                    warn!("sidecar download failed: {}", e);
+                    e
+                }),
+        )
+    }
+
     pub fn upload_sidecar(
         &self,
         data: Vec<u8>,
