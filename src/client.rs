@@ -143,6 +143,37 @@ impl StoreClient {
         )
     }
 
+    pub fn get_image(
+        &self,
+        image_id: &String,
+    ) -> Box<Future<Item = Vec<u8>, Error = error::Error>> {
+        let uri = self.build_uri(&format!("/image/{}", image_id));
+        info!(
+            "downloading image {} from store {}",
+            image_id,
+            uri.to_string()
+        );
+
+        Box::new(
+            self.client
+                .get(uri)
+                .and_then(|response| match response.status() {
+                    StatusCode::Ok => Ok(response),
+                    _ => Err(error::Error::Status),
+                })
+                .and_then(|response| response.body().concat2())
+                .and_then(|body| {
+                    let data = body.to_vec();
+                    info!("image downloaded ({} bytes)", data.len());
+                    Ok(data)
+                })
+                .map_err(|e| {
+                    warn!("image download failed: {}", e);
+                    e
+                }),
+        )
+    }
+
     pub fn upload_image(&self, data: Vec<u8>) -> Box<Future<Item = String, Error = error::Error>> {
         info!("uploading image to store ({} bytes)", data.len());
         let uri = self.build_uri("/image");
