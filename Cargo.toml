@@ -5,6 +5,6 @@ authors = ["Christoph Wurst <christoph@winzerhof-wurst.at>"]
 
 [dependencies]
 futures = "0.1"
-hyper = "0.11.0"
+hyper = "0.12.1"
 log = "*"
 tokio-core = "*"
